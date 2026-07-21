@@ -6,6 +6,7 @@ import estiloRoutes from './src/routes/estiloRoutes.js';
 import bandanaRoutes from './src/routes/bandanaRoutes.js';
 import materialRoutes from './src/routes/materialRoutes.js';
 import inventarioRoutes from './src/routes/inventarioRoutes.js';
+import authRoutes from './src/routes/authRoutes.js';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use('/api/estilos', estiloRoutes);
 app.use('/api/bandanas', bandanaRoutes);
 app.use('/api/materiales', materialRoutes);
 app.use('/api/inventario', inventarioRoutes);
+app.use('/api/auth', authRoutes);
 
 // Ruta base para verificación del estado del servidor
 app.get('/', (req, res) => {

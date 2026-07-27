@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import pool from './src/config/db.js';
 import estiloRoutes from './src/routes/estiloRoutes.js';
 import bandanaRoutes from './src/routes/bandanaRoutes.js';
@@ -16,12 +18,17 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Configuración de __dirname para módulos ES (import/export)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Configuración de middlewares globales
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Servir la carpeta de archivos estáticos (imágenes de comprobantes, stickers, etc.)
-app.use('/uploads', express.static('uploads'));
+// Servir la carpeta de archivos estáticos de forma absoluta (comprobantes, bandanas, etc.)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Registro de los módulos de rutas del sistema
 app.use('/api/estilos', estiloRoutes);

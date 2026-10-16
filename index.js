@@ -3,49 +3,42 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import pool from './src/config/db.js';
-import estiloRoutes from './src/routes/estiloRoutes.js';
-import bandanaRoutes from './src/routes/bandanaRoutes.js';
-import materialRoutes from './src/routes/materialRoutes.js';
-import inventarioRoutes from './src/routes/inventarioRoutes.js';
+
+// Rutas de la aplicación
 import authRoutes from './src/routes/authRoutes.js';
-import disenoRoutes from './src/routes/disenoRoutes.js';
-import recursoRoutes from './src/routes/recursoRoutes.js';
 import pedidoRoutes from './src/routes/pedidoRoutes.js';
+import productoRoutes from './src/routes/productoRoutes.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Configuración de __dirname para módulos ES (import/export)
+// Configuración de rutas de archivos
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configuración de middlewares globales
+// Middlewares
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Servir la carpeta de archivos estáticos de forma absoluta (comprobantes, bandanas, etc.)
+// Aumentamos el límite de payload a 50mb para recibir imágenes en Base64 sin error 413
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Servidor de archivos estáticos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Registro de los módulos de rutas del sistema
-app.use('/api/estilos', estiloRoutes);
-app.use('/api/bandanas', bandanaRoutes);
-app.use('/api/materiales', materialRoutes);
-app.use('/api/inventario', inventarioRoutes);
+// Definición de rutas principales
 app.use('/api/auth', authRoutes);
-app.use('/api/disenos', disenoRoutes);
-app.use('/api/recursos', recursoRoutes);
 app.use('/api/pedidos', pedidoRoutes);
+app.use('/api/productos', productoRoutes);
 
-// Ruta base para verificación del estado del servidor
+// Ruta de prueba
 app.get('/', (req, res) => {
-    res.send('Servidor de PeluditosEQ operando correctamente.');
+  res.send('Servidor de PeluditosEQ operando correctamente 🐾');
 });
 
-// Inicialización del servicio
+// Inicio del servidor
 app.listen(PORT, () => {
-    console.log(`Servidor backend escuchando en el puerto ${PORT}`);
+  console.log(`Servidor backend escuchando en el puerto ${PORT}`);
 });

@@ -1,72 +1,109 @@
+/**
+ * Modelo de datos para la gestión y persistencia de pedidos en la base de datos MySQL.
+ */
 import pool from '../config/db.js';
 
 const PedidoModel = {
-    // Obtener todos los pedidos (Para el Administrador)
+    // Obtiene el listado completo de todos los pedidos registrados en el sistema, incorporando datos del cliente y del producto asociado
     getAll: async () => {
         const [rows] = await pool.query(`
-            SELECT p.*, d.talla, d.precio_total 
+            SELECT 
+                p.id_pedido,
+                p.id_usuario,
+                COALESCE(u.nombre_completo, u.correo, 'Cliente') AS cliente_nombre,
+                p.id_producto,
+                p.talla_seleccionada AS talla,
+                p.cantidad,
+                p.precio_total AS total,
+                p.telefono_contacto,
+                p.tipo_entrega,
+                p.cedula_cliente,
+                p.ciudad,
+                p.direccion_envio,
+                p.comprobante_nequi,
+                p.estado_pedido,
+                p.fecha_pedido,
+                COALESCE(prod.nombre, 'Bandana') AS nombre_producto,
+                prod.imagen_url AS imagen
             FROM pedidos p 
-            INNER JOIN disenos d ON p.id_diseno = d.id_diseno 
-            ORDER BY p.fecha_pedido DESC
+            LEFT JOIN usuarios u ON p.id_usuario = u.id_usuario
+            LEFT JOIN productos prod ON (p.id_producto = prod.id_producto OR p.id_producto = prod.codigo)
+            ORDER BY p.id_pedido DESC
         `);
         return rows;
     },
 
-    // Obtener los pedidos de un cliente específico (Para la vista "Mis Pedidos")
-    getByCliente: async (identificador) => {
+    // Consulta el historial de pedidos pertenecientes a un cliente específico filtrando por su identificador de usuario
+    getByCliente: async (id_usuario) => {
         const [rows] = await pool.query(`
-            SELECT p.*, d.talla, d.precio_total, d.configuracion_canvas 
+            SELECT 
+                p.id_pedido,
+                p.id_usuario,
+                COALESCE(u.nombre_completo, u.correo, 'Cliente') AS cliente_nombre,
+                p.id_producto,
+                p.talla_seleccionada AS talla,
+                p.cantidad,
+                p.precio_total AS total,
+                p.telefono_contacto,
+                p.tipo_entrega,
+                p.cedula_cliente,
+                p.ciudad,
+                p.direccion_envio,
+                p.comprobante_nequi,
+                p.estado_pedido,
+                p.fecha_pedido,
+                COALESCE(prod.nombre, 'Bandana') AS nombre_producto,
+                prod.imagen_url AS imagen
             FROM pedidos p 
-            INNER JOIN disenos d ON p.id_diseno = d.id_diseno 
-            WHERE p.cedula_cliente = ? OR p.telefono_cliente = ?
-            ORDER BY p.fecha_pedido DESC
-        `, [identificador, identificador]);
+            LEFT JOIN usuarios u ON p.id_usuario = u.id_usuario
+            LEFT JOIN productos prod ON (p.id_producto = prod.id_producto OR p.id_producto = prod.codigo)
+            WHERE p.id_usuario = ?
+            ORDER BY p.id_pedido DESC
+        `, [id_usuario]);
         return rows;
     },
 
-    // Crear el pedido registrado desde los modales de Check-out
-    create: async (nuevoPedido) => {
+    // Registra un nuevo pedido en la base de datos validando los datos de envío y asignando el estado inicial predeterminado
+    create: async (datos) => {
         const {
-            id_diseno,
-            nombre_cliente,
-            telefono_cliente,
+            id_usuario,
+            id_producto,
+            talla_seleccionada,
+            cantidad,
+            precio_total,
+            telefono_contacto,
             tipo_entrega,
             cedula_cliente,
-            departamento,
             ciudad,
-            barrio,
-            direccion_entrega,
-            nota,
-            comprobante_url,
-            costo_envio,
-            total
-        } = nuevoPedido;
+            direccion_envio,
+            comprobante_nequi
+        } = datos;
+
+        const esEnvio = tipo_entrega === 'Envio' || tipo_entrega === 'Domicilio';
 
         const [result] = await pool.query(
             `INSERT INTO pedidos 
-            (id_diseno, nombre_cliente, telefono_cliente, tipo_entrega, cedula_cliente, departamento, ciudad, barrio, direccion_entrega, nota, comprobante_url, costo_envio, total, estado_pedido) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pendiente de verificación')`,
+            (id_usuario, id_producto, talla_seleccionada, cantidad, precio_total, telefono_contacto, tipo_entrega, cedula_cliente, ciudad, direccion_envio, comprobante_nequi, estado_pedido) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pendiente de verificación')`,
             [
-                id_diseno,
-                nombre_cliente,
-                telefono_cliente,
-                tipo_entrega,
-                tipo_entrega === 'Envio' ? cedula_cliente : null,
-                tipo_entrega === 'Envio' ? departamento : null,
-                tipo_entrega === 'Envio' ? ciudad : null,
-                tipo_entrega === 'Envio' ? barrio : null,
-                tipo_entrega === 'Envio' ? direccion_entrega : 'Recogida en punto / Acordar por WhatsApp',
-                nota || '',
-                comprobante_url,
-                tipo_entrega === 'Envio' ? (costo_envio || 0) : 0,
-                total
+                id_usuario,
+                id_producto,
+                talla_seleccionada,
+                cantidad,
+                precio_total,
+                telefono_contacto,
+                tipo_entrega || 'Recoger',
+                esEnvio ? cedula_cliente : null,
+                esEnvio ? ciudad : null,
+                esEnvio ? direccion_envio : 'Recogida en tienda',
+                comprobante_nequi
             ]
         );
 
         return result.insertId;
     },
 
-    // Cambiar estado del pedido (Solo Administrador)
+    // Actualiza el estado administrativo de un pedido específico según su identificador único
     updateEstado: async (id_pedido, nuevoEstado) => {
         const [result] = await pool.query(
             'UPDATE pedidos SET estado_pedido = ? WHERE id_pedido = ?',

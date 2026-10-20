@@ -1,12 +1,12 @@
 /**
- * Controlador de lógica para Registro y Login de Usuarios.
+ * Controlador de lógica para el registro y el inicio de sesión de usuarios.
  */
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import UsuarioModel from '../models/usuarioModel.js';
 
 const authController = {
-    // Registro de nuevo usuario con Lista Blanca de Administradores
+    // Procesa el registro de un nuevo usuario aplicando una lista blanca de administradores
     registro: async (req, res) => {
         try {
             const { nombre_completo, correo, password } = req.body;
@@ -15,28 +15,27 @@ const authController = {
                 return res.status(400).json({ message: 'Todos los campos son obligatorios.' });
             }
 
-            // Validar si el correo ya está registrado
+            // Valida si el correo electrónico ya se encuentra registrado en el sistema
             const usuarioExistente = await UsuarioModel.findByCorreo(correo);
             if (usuarioExistente) {
                 return res.status(400).json({ message: 'El correo electrónico ya está registrado.' });
             }
 
-            // Encriptar la contraseña por seguridad con cost factor 10
+            // Encripta la contraseña por seguridad utilizando un factor de costo de 10
             const passwordHashed = await bcrypt.hash(password, 10);
 
-            // 🛡️ LISTA BLANCA DE ADMINISTRADORES AUTORIZADOS
-            // Agrega aquí los correos electrónicos que tendrán acceso exclusivo al panel de administración
+            // Define la lista blanca con los correos electrónicos autorizados para el acceso administrativo
             const correosAdministradoresAutorizados = [
                 'admin@peluditos.com',
                 'estrellita@peluditos.com' 
             ];
 
-            // Evaluar de forma segura en el servidor si el correo está autorizado como admin
+            // Evalúa de forma segura en el servidor si el correo ingresado pertenece a un administrador autorizado
             const rolAsignado = correosAdministradoresAutorizados.includes(correo.toLowerCase().trim()) 
                 ? 'admin' 
                 : 'cliente';
 
-            // Guardar usuario usando el modelo con el rol determinado
+            // Almacena el nuevo usuario en la base de datos utilizando el modelo correspondiente
             const idUsuario = await UsuarioModel.create({
                 nombre_completo,
                 correo,
@@ -57,7 +56,7 @@ const authController = {
         }
     },
 
-    // Inicio de sesión (Validación segura con bcrypt)
+    // Gestiona el inicio de sesión mediante validación segura de credenciales con bcrypt
     login: async (req, res) => {
         try {
             const { correo, password } = req.body;
@@ -76,7 +75,7 @@ const authController = {
                 return res.status(401).json({ message: 'Credenciales inválidas.' });
             }
 
-            // Generar Token JWT de sesión incluyendo el rol real del usuario
+            // Genera el token JWT de sesión incorporando el rol real del usuario
             const secretKey = process.env.JWT_SECRET || 'secreto_peluditos_key';
             const token = jwt.sign(
                 { id_usuario: usuario.id_usuario, rol: usuario.rol || 'cliente' },

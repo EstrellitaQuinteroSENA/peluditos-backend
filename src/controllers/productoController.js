@@ -126,6 +126,28 @@ const productoController = {
             console.error("Error al eliminar producto:", error);
             res.status(500).json({ message: 'Error al eliminar producto', error: error.message });
         }
+    },
+
+    // Obtiene el catálogo de estilos desde la base de datos
+    obtenerEstilos: async (req, res) => {
+        try {
+            const [rows] = await pool.query('SELECT * FROM estilos');
+            res.json(rows);
+        } catch (error) {
+            console.error("Error al obtener estilos:", error);
+            res.status(500).json({ message: 'Error al obtener estilos', error: error.message });
+        }
+    },
+
+    // Obtiene el catálogo de materiales desde la base de datos
+    obtenerMateriales: async (req, res) => {
+        try {
+            const [rows] = await pool.query('SELECT * FROM materiales');
+            res.json(rows);
+        } catch (error) {
+            console.error("Error al obtener materiales:", error);
+            res.status(500).json({ message: 'Error al obtener materiales', error: error.message });
+        }
     }
 };
 

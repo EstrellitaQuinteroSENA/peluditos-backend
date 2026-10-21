@@ -10,6 +10,12 @@ const router = express.Router();
 // Define la ruta GET para obtener el listado completo de productos registrados
 router.get('/', productoController.obtenerProductos);
 
+// ----------------------------------------------------
+// NUEVAS RUTAS PARA ESTILOS Y MATERIALES DINÁMICOS
+// ----------------------------------------------------
+router.get('/estilos', productoController.obtenerEstilos);
+router.get('/materiales', productoController.obtenerMateriales);
+
 // Define la ruta POST para registrar un nuevo producto incorporando el archivo de imagen mediante Multer
 router.post('/', upload.single('imagen'), productoController.crearProducto);
 

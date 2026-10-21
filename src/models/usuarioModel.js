@@ -23,8 +23,8 @@ const UsuarioModel = {
     create: async (nuevoUsuario) => {
         const { nombre_completo, correo, password } = nuevoUsuario;
         const [result] = await pool.query(
-            'INSERT INTO usuarios (nombre_completo, correo, password, rol) VALUES (?, ?, ?, "cliente")',
-            [nombre_completo, correo, password]
+            'INSERT INTO usuarios (nombre_completo, correo, password, rol) VALUES (?, ?, ?, ?)',
+            [nombre_completo, correo, password, 'cliente']
         );
         return result.insertId;
     },

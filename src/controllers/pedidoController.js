@@ -16,44 +16,17 @@ const pedidoController = {
         }
     },
 
-    // Consulta los pedidos asociados a un cliente específico utilizando identificadores de sesión o parámetros
+    // Consulta los pedidos asociados estrictamente al cliente autenticado
     obtenerPorCliente: async (req, res) => {
         try {
             let id_usuario = req.usuario ? req.usuario.id_usuario : (req.params.id || req.body.id_usuario);
 
-            let pedidos = [];
-            if (id_usuario) {
-                pedidos = await PedidoModel.getByCliente(id_usuario);
+            if (!id_usuario) {
+                return res.status(401).json({ message: 'No autorizado para ver los pedidos.' });
             }
 
-            if (!pedidos || pedidos.length === 0) {
-                const [rows] = await pool.query(`
-                    SELECT 
-                        p.id_pedido,
-                        p.id_usuario,
-                        p.id_producto,
-                        p.talla_seleccionada AS talla,
-                        p.cantidad,
-                        p.precio_total AS total,
-                        p.telefono_contacto,
-                        p.tipo_entrega,
-                        p.cedula_cliente,
-                        p.ciudad,
-                        p.direccion_envio,
-                        p.comprobante_nequi,
-                        p.estado_pedido,
-                        p.fecha_pedido,
-                        COALESCE(prod.nombre, 'Bandana') AS nombre_producto,
-                        prod.imagen_url AS imagen
-                    FROM pedidos p 
-                    LEFT JOIN productos prod ON (p.id_producto = prod.id_producto OR p.id_producto = prod.codigo)
-                    ORDER BY p.id_pedido DESC 
-                    LIMIT 10
-                `);
-                pedidos = rows;
-            }
-
-            res.json(pedidos);
+            const pedidos = await PedidoModel.getByCliente(id_usuario);
+            return res.json(pedidos);
         } catch (error) {
             console.error("Error al consultar pedidos del cliente:", error);
             res.status(500).json({ message: 'Error al consultar tus pedidos.', error: error.message });

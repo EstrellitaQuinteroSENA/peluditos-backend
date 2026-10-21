@@ -4,7 +4,7 @@
 import pool from '../config/db.js';
 
 const PedidoModel = {
-    // Obtiene el listado completo de todos los pedidos registrados en el sistema, incorporando datos del cliente y del producto asociado
+    // Obtiene el listado completo de todos los pedidos registrados en el sistema, incorporando datos del cliente y del producto asociado (Usado por el administrador)
     getAll: async () => {
         const [rows] = await pool.query(`
             SELECT 
@@ -33,7 +33,7 @@ const PedidoModel = {
         return rows;
     },
 
-    // Consulta el historial de pedidos pertenecientes a un cliente específico filtrando por su identificador de usuario
+    // Consulta el historial de pedidos pertenecientes a un cliente específico filtrando por su identificador de usuario (Usado en "Mis Pedidos")
     getByCliente: async (id_usuario) => {
         const [rows] = await pool.query(`
             SELECT 

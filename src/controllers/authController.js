@@ -48,10 +48,12 @@ const authController = {
                 id_usuario: idUsuario
             });
         } catch (error) {
-            console.error("Error al registrar usuario:", error);
+            console.error("🔴 ERROR EXACTO AL REGISTRAR:", error);
+            // Esto enviará el error técnico exacto al frontend para verlo sin adivinar
             res.status(500).json({ 
                 message: 'Error en el servidor al registrar usuario.', 
-                error: error.message 
+                error: error.message,
+                detalles: error.sqlMessage || error.stack
             });
         }
     },
@@ -94,10 +96,11 @@ const authController = {
                 }
             });
         } catch (error) {
-            console.error("Error al iniciar sesión:", error);
+            console.error("🔴 ERROR EXACTO AL INICIAR SESIÓN:", error);
             res.status(500).json({ 
                 message: 'Error en el servidor al iniciar sesión.', 
-                error: error.message 
+                error: error.message,
+                detalles: error.sqlMessage || error.stack
             });
         }
     }

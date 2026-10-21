@@ -21,12 +21,10 @@ const productoController = {
             const { codigo, nombre, estilo, material, stockXS, stockS, stockM, stockL, stockXL, stockTotal, precio, descripcion } = req.body;
             const precioLimpio = typeof precio === 'string' ? precio.replace(',', '.') : precio;
 
-            // Determina la ruta del archivo de imagen recibido a través de la interfaz de carga
             let imagen_url = null;
             if (req.file) {
                 imagen_url = `/uploads/productos/${req.file.filename}`;
             } else if (req.body.imagen && typeof req.body.imagen === 'string') {
-                // Mantiene la ruta relativa en caso de recibir la cadena de texto de la imagen
                 const match = req.body.imagen.match(/\/uploads\/productos\/.+/);
                 imagen_url = match ? match[0] : req.body.imagen;
             }
@@ -44,10 +42,16 @@ const productoController = {
         }
     },
 
-    // Actualiza la información de una bandana existente según su código o identificador único
+    // Actualiza la información de una bandana existente de forma segura por su ID único
     actualizarProducto: async (req, res) => {
         try {
             let rawId = req.params.id;
+            
+            // Validación estricta para evitar que un ID vacío afecte toda la tabla
+            if (!rawId || rawId === 'undefined' || rawId === 'null') {
+                return res.status(400).json({ message: 'ID de producto inválido o no proporcionado' });
+            }
+
             const idDecodificado = decodeURIComponent(rawId).trim();
             const idSinNumeral = idDecodificado.replace('#', '');
 
@@ -62,7 +66,6 @@ const productoController = {
                 imagen_url = match ? match[0] : req.body.imagen;
             }
 
-            // Construye de forma dinámica la consulta SQL de actualización
             let queryUpdate = `UPDATE productos SET 
                 nombre = ?, estilo = ?, material = ?, 
                 stock_xs = ?, stock_s = ?, stock_m = ?, stock_l = ?, stock_xl = ?, stock_total = ?, 
@@ -74,14 +77,14 @@ const productoController = {
                 precioLimpio, descripcion
             ];
 
-            // Incorpora la actualización de la imagen únicamente cuando se proporciona un nuevo archivo o ruta
             if (imagen_url) {
                 queryUpdate += `, imagen_url = ?`;
                 params.push(imagen_url);
             }
 
-            queryUpdate += ` WHERE codigo = ? OR codigo = ? OR id_producto = ?`;
-            params.push(idDecodificado, idSinNumeral, idSinNumeral);
+            // Filtro estricto y seguro utilizando id_producto como prioridad absoluta
+            queryUpdate += ` WHERE id_producto = ? OR codigo = ?`;
+            params.push(idSinNumeral, idDecodificado);
 
             const [result] = await pool.query(queryUpdate, params);
 
@@ -96,16 +99,22 @@ const productoController = {
         }
     },
 
-    // Elimina un producto del sistema identificándolo por su código o identificador en la base de datos
+    // Elimina un producto del sistema asegurando que solo borre el registro con el ID correspondiente
     eliminarProducto: async (req, res) => {
         try {
             let rawId = req.params.id;
+
+            // Validación estricta para prevenir borrados masivos accidentales
+            if (!rawId || rawId === 'undefined' || rawId === 'null') {
+                return res.status(400).json({ message: 'ID de producto inválido o no proporcionado' });
+            }
+
             const idDecodificado = decodeURIComponent(rawId).trim();
             const idSinNumeral = idDecodificado.replace('#', '');
 
             const [result] = await pool.query(
-                'DELETE FROM productos WHERE codigo = ? OR codigo = ? OR id_producto = ?', 
-                [idDecodificado, idSinNumeral, idSinNumeral]
+                'DELETE FROM productos WHERE id_producto = ? OR codigo = ?', 
+                [idSinNumeral, idDecodificado]
             );
 
             if (result.affectedRows === 0) {

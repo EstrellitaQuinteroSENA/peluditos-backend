@@ -15,7 +15,7 @@ const productoController = {
         }
     },
 
-    // Registra una nueva bandana procesando la carga de archivos físicos y el desglose de inventario por tallas
+    // Registra una nueva bandana procesando la carga de archivos en Cloudinary y el desglose de inventario por tallas
     crearProducto: async (req, res) => {
         try {
             const { codigo, nombre, estilo, material, stockXS, stockS, stockM, stockL, stockXL, stockTotal, precio, descripcion } = req.body;
@@ -23,10 +23,10 @@ const productoController = {
 
             let imagen_url = null;
             if (req.file) {
-                imagen_url = `/uploads/productos/${req.file.filename}`;
+                // Cloudinary nos otorga la URL pública directamente en req.file.path
+                imagen_url = req.file.path;
             } else if (req.body.imagen && typeof req.body.imagen === 'string') {
-                const match = req.body.imagen.match(/\/uploads\/productos\/.+/);
-                imagen_url = match ? match[0] : req.body.imagen;
+                imagen_url = req.body.imagen;
             }
 
             const [result] = await pool.query(
@@ -60,10 +60,10 @@ const productoController = {
 
             let imagen_url = null;
             if (req.file) {
-                imagen_url = `/uploads/productos/${req.file.filename}`;
+                // Nueva URL pública de Cloudinary si se adjunta archivo nuevo
+                imagen_url = req.file.path;
             } else if (req.body.imagen && typeof req.body.imagen === 'string' && req.body.imagen.trim() !== '') {
-                const match = req.body.imagen.match(/\/uploads\/productos\/.+/);
-                imagen_url = match ? match[0] : req.body.imagen;
+                imagen_url = req.body.imagen;
             }
 
             let queryUpdate = `UPDATE productos SET 

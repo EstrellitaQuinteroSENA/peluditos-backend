@@ -33,7 +33,7 @@ const pedidoController = {
         }
     },
 
-    // Procesa la creación de un nuevo pedido validando datos de envío y el comprobante de pago adjunto
+    // Procesa la creación de un nuevo pedido validando datos de envío y el comprobante de pago adjunto en Cloudinary
     crearPedido: async (req, res) => {
         console.log("🔥 ¡LLEGÓ UNA PETICIÓN A CREAR PEDIDO!");
         console.log("BODY RECIBIDO:", req.body);
@@ -72,9 +72,10 @@ const pedidoController = {
 
             let comprobante_url = null;
             if (req.file) {
-                comprobante_url = `/uploads/comprobantes/${req.file.filename}`;
+                // Obtenemos la URL pública de Cloudinary directamente desde req.file.path
+                comprobante_url = req.file.path;
             } else if (req.files && req.files.length > 0) {
-                comprobante_url = `/uploads/comprobantes/${req.files[0].filename}`;
+                comprobante_url = req.files[0].path;
             }
 
             if (!comprobante_url) {

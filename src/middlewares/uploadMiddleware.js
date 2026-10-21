@@ -1,33 +1,43 @@
 /**
- * Middleware para la gestión de carga y almacenamiento de archivos físicos mediante Multer.
+ * Middleware para la gestión de carga y almacenamiento de archivos en la nube mediante Cloudinary.
  */
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
-import path from 'path';
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        // Determina el directorio de destino según el campo del formulario o la ruta del recurso
+// Configuración de credenciales de Cloudinary mediante variables de entorno
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configuración del almacenamiento dinámico en Cloudinary
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: async (req, file) => {
+        // Determina la carpeta de destino en Cloudinary según el campo o la ruta
+        let folderName = 'peluditos_uploads/comprobantes';
+        let prefix = 'comprobante';
+
         if (file.fieldname === 'imagen' || req.baseUrl.includes('productos')) {
-            cb(null, 'uploads/productos/');
-        } else {
-            // Asigna los comprobantes de pago a la carpeta de almacenamiento correspondiente
-            cb(null, 'uploads/comprobantes/');
+            folderName = 'peluditos_uploads/productos';
+            prefix = 'bandana';
         }
-    },
-    filename: (req, file, cb) => {
+
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname);
-        
-        // Asigna un prefijo identificador según el tipo de archivo procesado
-        const prefijo = (file.fieldname === 'imagen' || req.baseUrl.includes('productos')) ? 'bandana' : 'comprobante';
-        
-        cb(null, `${prefijo}-${uniqueSuffix}${ext}`);
+
+        return {
+            folder: folderName,
+            allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+            public_id: `${prefix}-${uniqueSuffix}`
+        };
     }
 });
 
 const upload = multer({ 
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 } // Define un límite máximo de almacenamiento de 5 MB por archivo
+    limits: { fileSize: 5 * 1024 * 1024 } // Límite máximo de 5 MB por archivo
 });
 
 export default upload;

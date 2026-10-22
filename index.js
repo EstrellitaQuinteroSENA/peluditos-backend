@@ -41,6 +41,19 @@ app.get('/', (req, res) => {
   res.send('Servidor de PeluditosEQ operando correctamente 🐾');
 });
 
+// =========================================================================
+// MANEJADOR GLOBAL DE ERRORES (Evita el HTML 500 y muestra el error exacto)
+// =========================================================================
+app.use((err, req, res, next) => {
+    console.error("🔥 ERROR GLOBAL DETECTADO:", err.message);
+    console.error("🔥 STACK TRACE:", err.stack);
+    
+    res.status(500).json({ 
+        message: 'Error interno en el servidor: ' + err.message,
+        error: err.stack 
+    });
+});
+
 // Inicia la ejecución del servidor backend en el puerto asignado
 app.listen(PORT, () => {
   console.log(`Servidor backend escuchando en el puerto ${PORT}`);

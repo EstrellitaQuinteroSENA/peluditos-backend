@@ -29,10 +29,10 @@ const productoController = {
                 imagen_url = req.body.imagen;
             }
 
-            // Generar un código único correlativo de forma automática para evitar conflictos en MySQL
-            const [countRows] = await pool.query('SELECT COUNT(*) as total FROM productos');
-            const siguienteNumero = countRows[0].total + 1;
-            const codigoGenerado = `#${String(siguienteNumero).padStart(3, '0')}`;
+            // Generar un código único seguro basado en el último ID o timestamp si está vacía
+            const [rowsMax] = await pool.query('SELECT MAX(id_producto) as maxId FROM productos');
+            const ultimoId = rowsMax[0] && rowsMax[0].maxId ? rowsMax[0].maxId : 0;
+            const codigoGenerado = `#${String(ultimoId + 1).padStart(3, '0')}`;
 
             const [result] = await pool.query(
                 `INSERT INTO productos (codigo, nombre, estilo, material, stock_xs, stock_s, stock_m, stock_l, stock_xl, stock_total, precio, descripcion, imagen_url) 
@@ -42,7 +42,7 @@ const productoController = {
 
             res.status(201).json({ message: 'Bandana creada exitosamente', id: result.insertId });
         } catch (error) {
-            console.error("Error al crear producto:", error);
+            console.error("Error detallado al crear producto:", error.message, error.stack);
             res.status(500).json({ message: 'Error al crear producto en MySQL', error: error.message });
         }
     },

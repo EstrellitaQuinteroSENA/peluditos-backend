@@ -10,7 +10,7 @@ const productoController = {
             const [rows] = await pool.query('SELECT * FROM productos ORDER BY id_producto DESC');
             res.json(rows);
         } catch (error) {
-            console.error("Error al obtener productos:", error);
+            console.error("Error al obtener productos:", error.message);
             res.status(500).json({ message: 'Error al obtener productos', error: error.message });
         }
     },
@@ -20,7 +20,6 @@ const productoController = {
         try {
             const { codigo, nombre, estilo, material, stockXS, stockS, stockM, stockL, stockXL, stockTotal, precio, descripcion } = req.body;
             
-            // Limpieza segura de precio y código
             const precioLimpio = precio ? String(precio).replace(',', '.') : 0;
             
             let imagen_url = null;
@@ -31,9 +30,8 @@ const productoController = {
                 imagen_url = req.body.imagen;
             }
 
-            // Validar o generar un código único si no viene en el body
+            // Generar un código único si no viene o está vacío
             let codigoFinal = codigo && codigo.trim() !== '' ? codigo.trim() : null;
-            
             if (!codigoFinal) {
                 const [rowsMax] = await pool.query('SELECT MAX(id_producto) as maxId FROM productos');
                 const ultimoId = rowsMax[0] && rowsMax[0].maxId ? rowsMax[0].maxId : 0;
@@ -62,7 +60,7 @@ const productoController = {
 
             res.status(201).json({ message: 'Bandana creada exitosamente', id: result.insertId });
         } catch (error) {
-            console.error("ERROR REAL AL CREAR PRODUCTO:", error.message, error.stack);
+            console.error("ERROR SQL EN CREAR PRODUCTO:", error.message);
             res.status(500).json({ message: 'Error al crear producto en MySQL', error: error.message });
         }
     },
@@ -72,7 +70,6 @@ const productoController = {
         try {
             let rawId = req.params.id;
             
-            // Validación estricta para evitar que un ID vacío afecte toda la tabla
             if (!rawId || rawId === 'undefined' || rawId === 'null') {
                 return res.status(400).json({ message: 'ID de producto inválido o no proporcionado' });
             }
@@ -85,7 +82,6 @@ const productoController = {
 
             let imagen_url = null;
             if (req.file) {
-                // Nueva URL pública de Cloudinary si se adjunta archivo nuevo
                 imagen_url = req.file.path;
             } else if (req.body.imagen && typeof req.body.imagen === 'string' && req.body.imagen.trim() !== '') {
                 imagen_url = req.body.imagen;
@@ -107,7 +103,6 @@ const productoController = {
                 params.push(imagen_url);
             }
 
-            // Filtro estricto y seguro utilizando id_producto como prioridad absoluta
             queryUpdate += ` WHERE id_producto = ? OR codigo = ?`;
             params.push(idSinNumeral, idDecodificado);
 
@@ -119,7 +114,7 @@ const productoController = {
 
             res.json({ message: 'Bandana actualizada exitosamente' });
         } catch (error) {
-            console.error("Error al actualizar producto:", error);
+            console.error("Error al actualizar producto:", error.message);
             res.status(500).json({ message: 'Error al actualizar producto', error: error.message });
         }
     },
@@ -129,7 +124,6 @@ const productoController = {
         try {
             let rawId = req.params.id;
 
-            // Validación estricta para prevenir borrados masivos accidentales
             if (!rawId || rawId === 'undefined' || rawId === 'null') {
                 return res.status(400).json({ message: 'ID de producto inválido o no proporcionado' });
             }
@@ -148,7 +142,7 @@ const productoController = {
 
             res.json({ message: 'Bandana eliminada exitosamente' });
         } catch (error) {
-            console.error("Error al eliminar producto:", error);
+            console.error("Error al eliminar producto:", error.message);
             res.status(500).json({ message: 'Error al eliminar producto', error: error.message });
         }
     },
@@ -159,7 +153,7 @@ const productoController = {
             const [rows] = await pool.query('SELECT * FROM estilos');
             res.json(rows);
         } catch (error) {
-            console.error("Error al obtener estilos:", error);
+            console.error("Error al obtener estilos:", error.message);
             res.status(500).json({ message: 'Error al obtener estilos', error: error.message });
         }
     },
@@ -170,7 +164,7 @@ const productoController = {
             const [rows] = await pool.query('SELECT * FROM materiales');
             res.json(rows);
         } catch (error) {
-            console.error("Error al obtener materiales:", error);
+            console.error("Error al obtener materiales:", error.message);
             res.status(500).json({ message: 'Error al obtener materiales', error: error.message });
         }
     }

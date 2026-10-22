@@ -18,7 +18,7 @@ const productoController = {
     // Registra una nueva bandana procesando la carga de archivos en Cloudinary y el desglose de inventario por tallas
     crearProducto: async (req, res) => {
         try {
-            const { codigo, nombre, estilo, material, stockXS, stockS, stockM, stockL, stockXL, stockTotal, precio, descripcion } = req.body;
+            const { nombre, estilo, material, stockXS, stockS, stockM, stockL, stockXL, stockTotal, precio, descripcion } = req.body;
             const precioLimpio = typeof precio === 'string' ? precio.replace(',', '.') : precio;
 
             let imagen_url = null;
@@ -29,10 +29,15 @@ const productoController = {
                 imagen_url = req.body.imagen;
             }
 
+            // Generar un código único correlativo de forma automática para evitar conflictos en MySQL
+            const [countRows] = await pool.query('SELECT COUNT(*) as total FROM productos');
+            const siguienteNumero = countRows[0].total + 1;
+            const codigoGenerado = `#${String(siguienteNumero).padStart(3, '0')}`;
+
             const [result] = await pool.query(
                 `INSERT INTO productos (codigo, nombre, estilo, material, stock_xs, stock_s, stock_m, stock_l, stock_xl, stock_total, precio, descripcion, imagen_url) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [codigo, nombre, estilo, material, stockXS || 0, stockS || 0, stockM || 0, stockL || 0, stockXL || 0, stockTotal || 0, precioLimpio, descripcion, imagen_url]
+                [codigoGenerado, nombre, estilo, material, stockXS || 0, stockS || 0, stockM || 0, stockL || 0, stockXL || 0, stockTotal || 0, precioLimpio, descripcion, imagen_url]
             );
 
             res.status(201).json({ message: 'Bandana creada exitosamente', id: result.insertId });

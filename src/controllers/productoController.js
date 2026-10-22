@@ -18,6 +18,10 @@ const productoController = {
     // Registra una nueva bandana procesando la carga de archivos en Cloudinary y el desglose de inventario por tallas
     crearProducto: async (req, res) => {
         try {
+            console.log("=== INICIO CREAR PRODUCTO ===");
+            console.log("BODY RECIBIDO:", req.body);
+            console.log("FILE RECIBIDO:", req.file);
+
             const { codigo, nombre, estilo, material, stockXS, stockS, stockM, stockL, stockXL, stockTotal, precio, descripcion } = req.body;
             
             const precioLimpio = precio ? String(precio).replace(',', '.') : 0;
@@ -58,10 +62,14 @@ const productoController = {
                 ]
             );
 
+            console.log("¡Producto creado con éxito! ID:", result.insertId);
             res.status(201).json({ message: 'Bandana creada exitosamente', id: result.insertId });
         } catch (error) {
-            console.error("ERROR SQL EN CREAR PRODUCTO:", error.message);
-            res.status(500).json({ message: 'Error al crear producto en MySQL', error: error.message });
+            console.error("ERROR REAL EN CREAR PRODUCTO:", error.message ? error.message : JSON.stringify(error));
+            res.status(500).json({ 
+                message: 'Error al crear producto en MySQL', 
+                error: error.message ? error.message : String(error) 
+            });
         }
     },
 

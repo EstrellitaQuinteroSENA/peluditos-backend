@@ -18,9 +18,11 @@ const productoController = {
     // Registra una nueva bandana procesando la carga de archivos en Cloudinary y el desglose de inventario por tallas
     crearProducto: async (req, res) => {
         try {
-            const { nombre, estilo, material, stockXS, stockS, stockM, stockL, stockXL, stockTotal, precio, descripcion } = req.body;
-            const precioLimpio = typeof precio === 'string' ? precio.replace(',', '.') : precio;
-
+            const { codigo, nombre, estilo, material, stockXS, stockS, stockM, stockL, stockXL, stockTotal, precio, descripcion } = req.body;
+            
+            // Limpieza segura de precio y código
+            const precioLimpio = precio ? String(precio).replace(',', '.') : 0;
+            
             let imagen_url = null;
             if (req.file) {
                 // Cloudinary nos otorga la URL pública directamente en req.file.path
@@ -29,20 +31,38 @@ const productoController = {
                 imagen_url = req.body.imagen;
             }
 
-            // Generar un código único seguro basado en el último ID o timestamp si está vacía
-            const [rowsMax] = await pool.query('SELECT MAX(id_producto) as maxId FROM productos');
-            const ultimoId = rowsMax[0] && rowsMax[0].maxId ? rowsMax[0].maxId : 0;
-            const codigoGenerado = `#${String(ultimoId + 1).padStart(3, '0')}`;
+            // Validar o generar un código único si no viene en el body
+            let codigoFinal = codigo && codigo.trim() !== '' ? codigo.trim() : null;
+            
+            if (!codigoFinal) {
+                const [rowsMax] = await pool.query('SELECT MAX(id_producto) as maxId FROM productos');
+                const ultimoId = rowsMax[0] && rowsMax[0].maxId ? rowsMax[0].maxId : 0;
+                codigoFinal = `#${String(ultimoId + 1).padStart(3, '0')}`;
+            }
 
             const [result] = await pool.query(
                 `INSERT INTO productos (codigo, nombre, estilo, material, stock_xs, stock_s, stock_m, stock_l, stock_xl, stock_total, precio, descripcion, imagen_url) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [codigoGenerado, nombre, estilo, material, stockXS || 0, stockS || 0, stockM || 0, stockL || 0, stockXL || 0, stockTotal || 0, precioLimpio, descripcion, imagen_url]
+                [
+                    codigoFinal, 
+                    nombre || 'Sin nombre', 
+                    estilo || 'Clásico', 
+                    material || 'Algodón', 
+                    Number(stockXS) || 0, 
+                    Number(stockS) || 0, 
+                    Number(stockM) || 0, 
+                    Number(stockL) || 0, 
+                    Number(stockXL) || 0, 
+                    Number(stockTotal) || 0, 
+                    Number(precioLimpio) || 0, 
+                    descripcion || '', 
+                    imagen_url
+                ]
             );
 
             res.status(201).json({ message: 'Bandana creada exitosamente', id: result.insertId });
         } catch (error) {
-            console.error("Error detallado al crear producto:", error.message, error.stack);
+            console.error("ERROR REAL AL CREAR PRODUCTO:", error.message, error.stack);
             res.status(500).json({ message: 'Error al crear producto en MySQL', error: error.message });
         }
     },
@@ -61,7 +81,7 @@ const productoController = {
             const idSinNumeral = idDecodificado.replace('#', '');
 
             const { nombre, estilo, material, stockXS, stockS, stockM, stockL, stockXL, stockTotal, precio, descripcion } = req.body;
-            const precioLimpio = typeof precio === 'string' ? precio.replace(',', '.') : precio;
+            const precioLimpio = precio ? String(precio).replace(',', '.') : 0;
 
             let imagen_url = null;
             if (req.file) {
@@ -78,8 +98,8 @@ const productoController = {
             
             let params = [
                 nombre, estilo, material, 
-                stockXS || 0, stockS || 0, stockM || 0, stockL || 0, stockXL || 0, stockTotal || 0, 
-                precioLimpio, descripcion
+                Number(stockXS) || 0, Number(stockS) || 0, Number(stockM) || 0, Number(stockL) || 0, Number(stockXL) || 0, Number(stockTotal) || 0, 
+                Number(precioLimpio) || 0, descripcion
             ];
 
             if (imagen_url) {

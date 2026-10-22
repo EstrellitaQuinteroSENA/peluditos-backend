@@ -12,14 +12,18 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Configuración del almacenamiento en Cloudinary (versión síncrona y segura)
+// Configuración del almacenamiento en Cloudinary con protecciones contra valores indefinidos
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: (req, file) => {
         let folderName = 'peluditos_uploads/comprobantes';
         let prefix = 'comprobante';
 
-        if (file.fieldname === 'imagen' || (req.baseUrl && req.baseUrl.includes('productos'))) {
+        // Validación segura usando encadenamiento opcional para evitar que explote si file es undefined
+        const fieldName = file?.fieldname || '';
+        const baseUrl = req?.baseUrl || '';
+
+        if (fieldName === 'imagen' || baseUrl.includes('productos')) {
             folderName = 'peluditos_uploads/productos';
             prefix = 'bandana';
         }

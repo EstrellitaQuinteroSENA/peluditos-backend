@@ -65,10 +65,13 @@ const productoController = {
             console.log("¡Producto creado con éxito! ID:", result.insertId);
             res.status(201).json({ message: 'Bandana creada exitosamente', id: result.insertId });
         } catch (error) {
-            console.error("ERROR REAL EN CREAR PRODUCTO:", error.message ? error.message : JSON.stringify(error));
+            console.error("🔥 ERROR CRITICO EN CREAR PRODUCTO (DETALLE):", error.message);
+            console.error("🔥 STACK TRACE:", error.stack);
+            console.error("🔥 OBJETO ERROR COMPLETO:", JSON.stringify(error, null, 2));
+            
             res.status(500).json({ 
-                message: 'Error al crear producto en MySQL', 
-                error: error.message ? error.message : String(error) 
+                message: 'Error al crear producto en MySQL: ' + error.message, 
+                error: error.stack 
             });
         }
     },

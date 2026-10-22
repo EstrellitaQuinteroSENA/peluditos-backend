@@ -12,15 +12,14 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Configuración del almacenamiento dinámico en Cloudinary
+// Configuración del almacenamiento en Cloudinary (versión síncrona y segura)
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
-    params: async (req, file) => {
-        // Determina la carpeta de destino en Cloudinary según el campo o la ruta
+    params: (req, file) => {
         let folderName = 'peluditos_uploads/comprobantes';
         let prefix = 'comprobante';
 
-        if (file.fieldname === 'imagen' || req.baseUrl.includes('productos')) {
+        if (file.fieldname === 'imagen' || (req.baseUrl && req.baseUrl.includes('productos'))) {
             folderName = 'peluditos_uploads/productos';
             prefix = 'bandana';
         }

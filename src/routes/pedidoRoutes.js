@@ -18,7 +18,7 @@ router.get('/cliente/:id', verificarToken, pedidoController.obtenerPorCliente);
 // Define la ruta POST para procesar la creación de un nuevo pedido incluyendo archivos físicos mediante Multer
 router.post('/', verificarToken, upload.any(), pedidoController.crearPedido);
 
-// Define la ruta PATCH para actualizar el estado administrativo de un pedido específico
-router.patch('/:id/estado', verificarToken, pedidoController.cambiarEstado);
+// Define la ruta PUT para actualizar el estado administrativo de un pedido específico
+router.put('/:id/estado', verificarToken, pedidoController.cambiarEstado);
 
 export default router;

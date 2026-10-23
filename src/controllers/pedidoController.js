@@ -19,7 +19,8 @@ const pedidoController = {
     // Consulta los pedidos asociados estrictamente al cliente autenticado
     obtenerPorCliente: async (req, res) => {
         try {
-            let id_usuario = req.usuario ? req.usuario.id_usuario : (req.params.id || req.body.id_usuario);
+            // Extrae el ID del usuario soportando distintas estructuras del token (id_usuario o id)
+            const id_usuario = req.usuario?.id_usuario || req.usuario?.id || req.params.id || req.body.id_usuario;
 
             if (!id_usuario) {
                 return res.status(401).json({ message: 'No autorizado para ver los pedidos.' });
@@ -60,19 +61,22 @@ const pedidoController = {
                 direccion_entrega
             } = req.body;
 
-            // Prioriza el usuario autenticado en la solicitud, seguido del cuerpo y un valor predeterminado como respaldo
-            const id_usuario = req.usuario ? req.usuario.id_usuario : (usuarioBody || 5);
+            // Obtiene el ID del usuario autenticado de forma segura
+            const id_usuario = req.usuario?.id_usuario || req.usuario?.id || usuarioBody;
             
+            if (!id_usuario) {
+                return res.status(401).json({ message: 'Usuario no autenticado para realizar el pedido.' });
+            }
+
             const productoFinal = id_producto || productoId || id || codigo;
-            const telFinal = telefono_contacto || telefono_cliente;
-            const precioFinal = precio_total || total;
+            const telFinal = telefono_contacto || telefono_cliente || 'Sin teléfono';
+            const precioFinal = precio_total || total || 0;
             const tallaFinal = talla_seleccionada || talla || 'M';
             const cantidadFinal = cantidad || 1;
             const direccionFinal = direccion_envio || direccion_entrega || 'Recogida en tienda';
 
             let comprobante_url = null;
             if (req.file) {
-                // Obtenemos la URL pública de Cloudinary directamente desde req.file.path
                 comprobante_url = req.file.path;
             } else if (req.files && req.files.length > 0) {
                 comprobante_url = req.files[0].path;
@@ -80,10 +84,6 @@ const pedidoController = {
 
             if (!comprobante_url) {
                 return res.status(400).json({ message: 'Debes adjuntar el comprobante de pago.' });
-            }
-
-            if (!telFinal || !precioFinal) {
-                return res.status(400).json({ message: 'El teléfono y el total son obligatorios.' });
             }
 
             const idPedido = await PedidoModel.create({
